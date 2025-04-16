@@ -231,13 +231,14 @@ function sendGesture(gesture) {
   }
 }
 
-async function toggleMute() {
+function toggleMute() {
   if (!localAudioTrack) return;
 
-  const isMuted = !localAudioTrack.enabled;
-  await localAudioTrack.setEnabled(isMuted);
+  const currentlyEnabled = localAudioTrack.enabled;
 
-  muteBtn.textContent = isMuted ? "Mute" : "Unmute";
+  localAudioTrack.setEnabled(!currentlyEnabled);
+
+  muteBtn.textContent = currentlyEnabled ? "Unmute" : "Mute";
 }
 
 async function leaveCall() {
