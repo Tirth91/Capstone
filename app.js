@@ -139,12 +139,20 @@ function setupListeners() {
     updateParticipantCount();
   });
 
-  client.on("user-unpublished", user => {
-    const id = `remote-${user.uid}`;
-    document.getElementById(`box-${id}`)?.remove();
-    participants.delete(id);
-    updateParticipantCount();
+  client.on("user-unpublished", (user, mediaType) => {
+    if (mediaType === "video") {
+      const id = `remote-${user.uid}`;
+      document.getElementById(`box-${id}`)?.remove();
+      participants.delete(id);
+      updateParticipantCount();
+    }
+  
+    // Optionally: log when someone mutes
+    if (mediaType === "audio") {
+      console.log(`User ${user.uid} muted/unmuted their mic`);
+    }
   });
+  
 
   client.on("user-left", user => {
     const id = `remote-${user.uid}`;
@@ -231,15 +239,19 @@ function sendGesture(gesture) {
   }
 }
 
+let isAudioMuted = false;
+
 function toggleMute() {
   if (!localAudioTrack) return;
 
-  const currentlyEnabled = localAudioTrack.enabled;
+  isAudioMuted = !isAudioMuted;
 
-  localAudioTrack.setEnabled(!currentlyEnabled);
-
-  muteBtn.textContent = currentlyEnabled ? "Unmute" : "Mute";
+  localAudioTrack.setEnabled(!isAudioMuted);  // Enable if not muted
+  const muteBtn = document.getElementById("mute-btn");
+  muteBtn.textContent = isAudioMuted ? 'Unmute' : 'Mute';
+  muteBtn.style.backgroundColor = isAudioMuted ? 'cadetblue' : '#EE4B2B';
 }
+
 
 async function leaveCall() {
   await client.leave();
