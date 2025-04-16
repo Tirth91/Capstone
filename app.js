@@ -12,8 +12,8 @@ const videoGrid = document.getElementById("video-grid");
 const participantCount = document.getElementById("participant-count");
 const leaveBtn = document.getElementById("leave-btn");
 const roomIdInput = document.getElementById("room-id-input");
+const muteBtn = document.getElementById("mute-btn");
 const status = document.getElementById("status");
-
 const remoteGestureSpan = document.getElementById("remote-gesture");
 
 const ws = new WebSocket("wss://skitter-rural-slipper.glitch.me/");
@@ -36,7 +36,6 @@ ws.onclose = () => {
 let gestureTimeout;
 function updateRemoteGestureDisplay(gesture) {
   if (remoteGestureSpan) remoteGestureSpan.textContent = gesture || "Not received";
-
   clearTimeout(gestureTimeout);
   gestureTimeout = setTimeout(() => {
     remoteGestureSpan.textContent = "Not received";
@@ -119,6 +118,7 @@ async function joinCall() {
   setupListeners();
 
   leaveBtn.disabled = false;
+  muteBtn.disabled = false;
   roomIdInput.disabled = true;
   status.textContent = `In call: ${CHANNEL}`;
 }
@@ -126,15 +126,17 @@ async function joinCall() {
 function setupListeners() {
   client.on("user-published", async (user, mediaType) => {
     await client.subscribe(user, mediaType);
+    const id = `remote-${user.uid}`;
+
     if (mediaType === "video") {
-      const id = `remote-${user.uid}`;
       createVideoBox(id, `User ${user.uid}`);
       user.videoTrack.play(id);
       participants.add(id);
-      updateParticipantCount();
     } else if (mediaType === "audio") {
-      user.audioTrack.play(); // Play remote user's audio
+      user.audioTrack.play();
     }
+
+    updateParticipantCount();
   });
 
   client.on("user-unpublished", user => {
@@ -229,6 +231,15 @@ function sendGesture(gesture) {
   }
 }
 
+async function toggleMute() {
+  if (!localAudioTrack) return;
+
+  const isMuted = !localAudioTrack.enabled;
+  await localAudioTrack.setEnabled(isMuted);
+
+  muteBtn.textContent = isMuted ? "Mute" : "Unmute";
+}
+
 async function leaveCall() {
   await client.leave();
   localTrack?.stop();
@@ -239,6 +250,7 @@ async function leaveCall() {
   participants.clear();
   updateParticipantCount();
   leaveBtn.disabled = true;
+  muteBtn.disabled = true;
   roomIdInput.disabled = false;
   status.textContent = "Left call";
 }
