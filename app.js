@@ -140,6 +140,8 @@ function setupListeners() {
   });
 
   client.on("user-unpublished", (user, mediaType) => {
+    console.log(`user-unpublished: ${user.uid}, mediaType: ${mediaType}`);
+  
     if (mediaType === "video") {
       const id = `remote-${user.uid}`;
       document.getElementById(`box-${id}`)?.remove();
@@ -147,13 +149,12 @@ function setupListeners() {
       updateParticipantCount();
     }
   
-    // Optionally: log when someone mutes
     if (mediaType === "audio") {
-      console.log(`User ${user.uid} muted/unmuted their mic`);
+      console.log(`User ${user.uid} muted their mic`);
+      // Optional: show a mic muted icon
     }
   });
   
-
   client.on("user-left", user => {
     const id = `remote-${user.uid}`;
     document.getElementById(`box-${id}`)?.remove();
